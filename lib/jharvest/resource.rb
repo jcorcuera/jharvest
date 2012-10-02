@@ -1,10 +1,18 @@
+require 'base64'
+require 'bigdecimal'
+require 'date'
+require 'net/http'
+require 'net/https'
+require 'time'
+
 module JHarvest
   class Resource
     def initialize(opts)
       @subdomain = opts[:subdomain]
       @email     = opts[:email]
       @password  = opts[:password]
-      setup_connection
+      @preferred_protocols = [true, false]
+      connect!
     end
 
     def headers
@@ -30,7 +38,10 @@ module JHarvest
         sleep(response['Retry-After'].to_i + 5)
         request(path, method, body)
       elsif response.class == Net::HTTPFound
-        raise "Failed connection"
+        @preferred_protocols.shift
+        raise "Failed connection using http or https" if @preferred_protocols.empty?
+        connect!
+        request(path, method, body)
       else
         dump_headers = response.to_hash.map { |h,v| [h.upcase,v].join(': ') }.join("\n")
         raise "#{response.message} (#{response.code})\n\n#{dump_headers}\n\n#{response.body}\n"
@@ -39,11 +50,15 @@ module JHarvest
 
     private
 
-    def setup_connection
-      post = 443
+    def connect!
+      port = has_ssl ? 443 : 80
       @connection = Net::HTTP.new("#{@subdomain}.harvestapp.com", port)
-      @connection.use_ssl = true
-      @connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      @connection.use_ssl = has_ssl
+      @connection.verify_mode = OpenSSL::SSL::VERIFY_NONE if has_ssl
+    end
+
+    def has_ssl
+      @preferred_protocols.first
     end
 
     def send_request(path, method = :get, body = '')
@@ -67,4 +82,5 @@ module JHarvest
       @retry_counter ||= 0
       @retry_counter += 1
     end
+  end
 end
