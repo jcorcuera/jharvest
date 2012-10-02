@@ -4,6 +4,7 @@ require 'date'
 require 'net/http'
 require 'net/https'
 require 'time'
+require 'active_support/core_ext/hash/conversions'
 
 module JHarvest
   class Resource
