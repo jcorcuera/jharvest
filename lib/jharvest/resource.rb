@@ -12,6 +12,7 @@ module JHarvest
       @subdomain = opts[:subdomain]
       @email     = opts[:email]
       @password  = opts[:password]
+      @token     = opts[:token]
       @preferred_protocols = [true, false]
       connect!
     end
@@ -26,7 +27,7 @@ module JHarvest
     end
 
     def auth_string
-      Base64.encode64("#{@email}:#{@password}").delete("\r\n")
+      @token || Base64.encode64("#{@email}:#{@password}").delete("\r\n")
     end
 
     def request(path, method = :get, body = "")
