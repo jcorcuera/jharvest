@@ -34,7 +34,7 @@ module JHarvest
     def find_entry(entry_id)
       response = @resource.request("/daily/show/#{entry_id}", :get)
       hash = Hash.from_xml(response.body)
-      hash['timer']
+      hash['add']
     end
 
   end
